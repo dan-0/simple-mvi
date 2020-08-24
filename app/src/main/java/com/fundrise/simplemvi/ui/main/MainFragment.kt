@@ -27,8 +27,6 @@ class MainFragment : Fragment() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    private lateinit var actor: MainActor
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View {
         _binding = MainFragmentBinding.inflate(inflater, container, false)
@@ -38,16 +36,14 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        actor = MainActor(viewModel::handleIntent)
-
         observeChanges()
 
         binding.errorRefresh.setOnClickListener {
-            actor.tapErrorRefresh()
+            viewModel.handleClick()
         }
 
         binding.incrementButton.setOnClickListener {
-            actor.tapClickMe()
+            viewModel.handleClick()
         }
     }
 
@@ -65,7 +61,7 @@ class MainFragment : Fragment() {
     }
 
     private fun handleInit() {
-        actor.initialize(8)
+        viewModel.handleClick()
     }
 
     private fun handleLoading() {
