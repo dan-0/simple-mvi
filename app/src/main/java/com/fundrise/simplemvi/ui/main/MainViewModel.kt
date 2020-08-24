@@ -13,7 +13,9 @@ import kotlin.random.Random
 /**
  * Simple view model that holds and dictates state based on received Intents
  */
-class MainViewModel : ViewModel() {
+class MainViewModel(
+    private val analytics: Analytics = Analytics()
+) : ViewModel() {
     private val _state = MutableLiveData<MainState>(MainState.Init)
     val state: LiveData<MainState> = _state
 
@@ -24,7 +26,7 @@ class MainViewModel : ViewModel() {
      */
     fun handleIntent(intent: MainIntent) {
 
-        updateState(MainState.Loading)
+        updateState(MainState.Loading, intent)
 
         viewModelScope.launch(Dispatchers.IO) {
             val newState: MainState = when (intent) {
@@ -33,7 +35,7 @@ class MainViewModel : ViewModel() {
                 MainIntent.IncrementCounter -> handleIncrementCounter()
             }
 
-            updateState(newState)
+            updateState(newState, intent)
         }
     }
 
@@ -69,9 +71,39 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    private fun updateState(newState: MainState) {
+    private fun updateState(newState: MainState, originatingIntent: MainIntent) {
         Log.d("MVIDEMO_VM", "Handling new state: ${newState::class.simpleName}")
+
+        trackStateChange(newState, originatingIntent)
+
         _state.postValue(newState)
+    }
+
+    private fun trackStateChange(
+        newState: MainState,
+        originatingIntent: MainIntent
+    ) {
+        when (newState) {
+            MainState.Init -> {
+                /* Stub; analytics for initialized values/states are better done in an [init] block */
+            }
+            MainState.Loading -> {
+                /* Stub; this is a transitional event and does not normally need to be tracked, but can be */
+            }
+            MainState.Error -> {
+                val props = mapOf(
+                    "user_action" to originatingIntent.analyticKey
+                )
+                analytics.trackEvent(UiEvent.ERROR_DISPLAYED, props)
+            }
+            is MainState.Content -> {
+                val props = mapOf(
+                    "user_action" to originatingIntent.analyticKey,
+                    "times_clicked" to newState.timesClicked.toString()
+                )
+                analytics.trackEvent(UiEvent.CONTENT, props)
+            }
+        }
     }
 }
 

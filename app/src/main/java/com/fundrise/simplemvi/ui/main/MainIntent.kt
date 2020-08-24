@@ -9,19 +9,21 @@ package com.fundrise.simplemvi.ui.main
  * actual desired programmatic result/intent to [IncrementCounter]. This helps to further separate concerns
  * between the View and Model layers as several user actions may resolve to a single intent.
  */
-sealed class MainIntent {
+sealed class MainIntent(
+    val analyticKey: String
+) {
     /**
      * Intent to initialize the UX with the given input
      */
-    data class Initialize(val initialValue: Int) : MainIntent()
+    data class Initialize(val initialValue: Int) : MainIntent("main_initialize")
 
     /**
      * Intent to Refresh the UX
      */
-    object Refresh : MainIntent()
+    object Refresh : MainIntent("main_refresh")
 
     /**
      * Intent to increment the counter shown in the UX
      */
-    object IncrementCounter : MainIntent()
+    object IncrementCounter : MainIntent("main_increment_counter")
 }
