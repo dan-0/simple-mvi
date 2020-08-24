@@ -6,20 +6,20 @@ package com.fundrise.simplemvi.ui.main
  * @property intentHandler Handles resolved intents.
  */
 class MainActor(
-    val intentHandler: (MainIntent) -> Unit
+    val intentHandler: (MainIntent.UserIntent) -> Unit
 ) {
     fun tapClickMe() {
-        val intent = MainIntent.IncrementCounter
+        val intent = MainIntent.UserIntent.IncrementCounter
         intentHandler(intent)
     }
 
     fun tapErrorRefresh() {
-        val intent = MainIntent.Refresh
+        val intent = MainIntent.UserIntent.Refresh
         intentHandler(intent)
     }
 
     fun initialize(initValue: Int) {
-        val intent = MainIntent.Initialize(initValue)
+        val intent = MainIntent.UserIntent.Initialize(initValue)
         intentHandler(intent)
     }
 }

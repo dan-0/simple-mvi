@@ -12,18 +12,35 @@ package com.fundrise.simplemvi.ui.main
 sealed class MainIntent(
     val analyticKey: String
 ) {
-    /**
-     * Intent to initialize the UX with the given input
-     */
-    data class Initialize(val initialValue: Int) : MainIntent("main_initialize")
 
     /**
-     * Intent to Refresh the UX
+     * An intent originating from the User
      */
-    object Refresh : MainIntent("main_refresh")
+    sealed class UserIntent(key: String) : MainIntent(key) {
+
+        /**
+         * Intent to initialize the UX with the given input
+         */
+        data class Initialize(val initialValue: Int) : UserIntent("main_initialize")
+
+        /**
+         * Intent to Refresh the UX
+         */
+        object Refresh : UserIntent("main_refresh")
+
+        /**
+         * Intent to increment the counter shown in the UX
+         */
+        object IncrementCounter : UserIntent("main_increment_counter")
+    }
 
     /**
-     * Intent to increment the counter shown in the UX
+     * An intent originating from the system
      */
-    object IncrementCounter : MainIntent("main_increment_counter")
+    sealed class SystemIntent(key: String) : MainIntent(key) {
+        /**
+         * A system initiated intent
+         */
+        object SystemLoading : SystemIntent("main_system_initiated")
+    }
 }

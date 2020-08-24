@@ -24,15 +24,15 @@ class MainViewModel(
     /**
      * Receives and handles [intent]s from the view layer
      */
-    fun handleIntent(intent: MainIntent) {
+    fun handleIntent(intent: MainIntent.UserIntent) {
 
-        updateState(MainState.Loading, intent)
+        updateState(MainState.Loading, MainIntent.SystemIntent.SystemLoading)
 
         viewModelScope.launch(Dispatchers.IO) {
             val newState: MainState = when (intent) {
-                is MainIntent.Initialize -> doInitialization(intent)
-                MainIntent.Refresh -> handleRefresh()
-                MainIntent.IncrementCounter -> handleIncrementCounter()
+                is MainIntent.UserIntent.Initialize -> doInitialization(intent)
+                MainIntent.UserIntent.Refresh -> handleRefresh()
+                MainIntent.UserIntent.IncrementCounter -> handleIncrementCounter()
             }
 
             updateState(newState, intent)
@@ -42,7 +42,7 @@ class MainViewModel(
     /**
      * Initialize the ViewModel with a value received from the view layer
      */
-    private fun doInitialization(intent: MainIntent.Initialize): MainState {
+    private fun doInitialization(intent: MainIntent.UserIntent.Initialize): MainState {
         timesClicked = intent.initialValue
         return MainState.Content(timesClicked)
     }
