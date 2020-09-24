@@ -7,8 +7,17 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
+import androidx.lifecycle.whenCreated
 import com.fundrise.simplemvi.databinding.MainFragmentBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 /**
  * A simple Fragment that mimics moderately complex state changes.
@@ -26,6 +35,7 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by viewModels()
+    private val stateFlowViewModel: StateFlowViewModel by viewModels()
 
     private lateinit var actor: MainActor
 
@@ -37,6 +47,10 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        stateFlowViewModel.start()
+
+        Log.d("STATE_FLOW_FRAGMENT_T", "thread: ${Thread.currentThread().name}")
 
         actor = MainActor(viewModel::handleIntent)
 
@@ -52,14 +66,16 @@ class MainFragment : Fragment() {
     }
 
     private fun observeChanges() {
-        viewModel.state.observe(viewLifecycleOwner) {
-            Log.d("MVIDEMO_FRAGMENT", "State: $it")
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
+            viewModel.state.collect {
+                Log.d("MVIDEMO_FRAGMENT", "State: $it")
 
-            when (it) {
-                MainState.Init -> handleInit()
-                MainState.Loading -> handleLoading()
-                MainState.Error -> handleError()
-                is MainState.Content -> handleContent(it)
+                when (it) {
+                    MainState.Init -> handleInit()
+                    MainState.Loading -> handleLoading()
+                    MainState.Error -> handleError()
+                    is MainState.Content -> handleContent(it)
+                }
             }
         }
     }

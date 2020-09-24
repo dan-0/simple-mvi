@@ -1,25 +1,35 @@
 package com.fundrise.simplemvi.ui.main
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 /**
  * Simple view model that holds and dictates state based on received Intents
  */
 class MainViewModel(
-    private val analytics: Analytics = Analytics()
+    private val analytics: Analytics = Analytics(),
+    private val repo: TimesClickedRepo = TimesClickedRepo()
 ) : ViewModel() {
-    private val _state = MutableLiveData<MainState>(MainState.Init)
-    val state: LiveData<MainState> = _state
 
-    private var timesClicked: Int = -1
+    private val _state = MutableStateFlow<MainState>(MainState.Init)
+    val state: StateFlow<MainState> = _state
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.dataSource.collect {
+                _state.value = when (it) {
+                    is TimesClickedRepoState.Content -> MainState.Content(it.counter)
+                    TimesClickedRepoState.Error -> MainState.Error
+                }
+            }
+        }
+    }
 
     /**
      * Receives and handles [intent]s from the view layer
@@ -32,7 +42,7 @@ class MainViewModel(
             val newState: MainState = when (intent) {
                 is MainIntent.UserIntent.Initialize -> doInitialization(intent)
                 MainIntent.UserIntent.Refresh -> handleRefresh()
-                MainIntent.UserIntent.IncrementCounter -> handleIncrementCounter()
+                MainIntent.UserIntent.IncrementCounter -> doIncrement()
             }
 
             updateState(newState, intent)
@@ -43,32 +53,27 @@ class MainViewModel(
      * Initialize the ViewModel with a value received from the view layer
      */
     private fun doInitialization(intent: MainIntent.UserIntent.Initialize): MainState {
-        timesClicked = intent.initialValue
-        return MainState.Content(timesClicked)
+        viewModelScope.launch {
+            repo.incrementCounter(intent.initialValue)
+        }
+        return MainState.Loading
+    }
+
+    private fun doIncrement(): MainState {
+        viewModelScope.launch {
+            repo.incrementCounter()
+        }
+        return MainState.Loading
     }
 
     /**
      * Handle the intent to refresh the view.
      */
     private fun handleRefresh(): MainState {
-        return MainState.Content(timesClicked)
-    }
-
-    /**
-     * Handle incrementing the counter
-     */
-    private suspend fun handleIncrementCounter(): MainState {
-
-        delay(1000)
-
-        val isRandomError = Random.nextBoolean()
-
-        return if (isRandomError) {
-            MainState.Error
-        } else {
-            timesClicked++
-            MainState.Content(timesClicked)
+        viewModelScope.launch {
+            repo.refresh()
         }
+        return MainState.Loading
     }
 
     private fun updateState(newState: MainState, originatingIntent: MainIntent) {
@@ -76,7 +81,7 @@ class MainViewModel(
 
         trackStateChange(newState, originatingIntent)
 
-        _state.postValue(newState)
+        _state.value = newState
     }
 
     private fun trackStateChange(
