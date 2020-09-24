@@ -35,7 +35,6 @@ class MainFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by viewModels()
-    private val stateFlowViewModel: StateFlowViewModel by viewModels()
 
     private lateinit var actor: MainActor
 
@@ -47,10 +46,6 @@ class MainFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        stateFlowViewModel.start()
-
-        Log.d("STATE_FLOW_FRAGMENT_T", "thread: ${Thread.currentThread().name}")
 
         actor = MainActor(viewModel::handleIntent)
 
